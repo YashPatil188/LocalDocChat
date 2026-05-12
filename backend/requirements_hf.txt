@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-multipart
+faiss-cpu
+requests
+PyMuPDF
+onnxruntime
+tokenizers
+huggingface-hub
+numpy

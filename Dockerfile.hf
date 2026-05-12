@@ -1,0 +1,41 @@
+## ---------- Build Frontend ----------
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+## ---------- Backend ----------
+FROM python:3.11-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# Install Python dependencies (lightweight, no PyTorch, no Ollama)
+COPY backend/requirements_hf.txt ./
+RUN pip install --no-cache-dir -r requirements_hf.txt
+
+# Copy backend source
+COPY backend/ ./backend/
+
+# Copy built frontend
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+
+# Create writable directories
+RUN mkdir -p /app/data && chmod 777 /app/data
+
+# Copy startup script
+COPY start.sh ./start.sh
+RUN chmod +x start.sh
+
+EXPOSE 7860
+
+ENV PORT=7860
+ENV USE_ONNX=1
+ENV USE_HF_INFERENCE=1
+# HF_TOKEN is injected by HuggingFace Space secrets
+
+CMD ["./start.sh"]
