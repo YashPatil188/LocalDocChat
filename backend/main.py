@@ -46,12 +46,13 @@ async def upload(files: List[UploadFile] = File(...)):
 
 @app.post("/chat")
 async def chat(query: dict):
-    # Expected JSON: {"question": "..."}
+    # Expected JSON: {"question": "...", "history": [...]}
     question = query.get("question")
+    history = query.get("history", [])
     if not question:
         raise HTTPException(status_code=400, detail="Missing 'question' field")
     try:
-        answer = await handle_chat(question)
+        answer = await handle_chat(question, history)
         return {"answer": answer}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

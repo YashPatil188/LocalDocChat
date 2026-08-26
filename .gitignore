@@ -29,6 +29,7 @@ pnpm-debug.log*
 
 # Data/Storage
 data/faiss_index.faiss
+data/*.meta
 data/*.pdf
 data/*.json
 

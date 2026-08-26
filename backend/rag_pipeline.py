@@ -65,14 +65,24 @@ async def process_upload(files: List[object]):
         embeddings = [get_embedding(chunk) for chunk in chunks]
         add_documents(chunks, embeddings, index_path=FAISS_INDEX_PATH)
 
-async def handle_chat(question: str) -> str:
+async def handle_chat(question: str, history: List[dict] = None) -> str:
     """Given a user question, retrieve relevant chunks and generate answer via LLM."""
-    query_emb = get_embedding(question)
+    if history is None:
+        history = []
+
+    # Contextualize search query by prepending the last user question if history exists
+    search_query = question
+    if history:
+        last_user_msgs = [msg for msg in history if msg.get("role") == "user"]
+        if last_user_msgs:
+            search_query = f"{last_user_msgs[-1].get('text', '')} {question}"
+
+    query_emb = get_embedding(search_query)
     results = search_documents(query_emb, k=3, index_path=FAISS_INDEX_PATH)
     if not results:
         return "No documents have been uploaded yet. Please upload a PDF first."
     context = "\n\n".join([doc for doc, _score in results])
-    answer = generate_answer(context, question)
+    answer = generate_answer(context, question, history)
     return answer
 
 def reset_all():
